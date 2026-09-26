@@ -12,6 +12,7 @@ const fail = (error) => ({ success: false, data: null, error });
  * @param {object} deps
  * @param {string[]} deps.corsOrigins
  * @param {number} deps.rateLimitPerMinute - per client IP, on /api/analyze
+ * @param {number} [deps.trustProxy] - reverse proxies to trust for the client IP
  * @param {(url: string) => Promise<{ username: string, content: string }>} deps.fetchTweet
  * @param {(content: string) => Promise<{ sentiment: string, summary: string }>} deps.analyzeText
  * @param {((record: object) => Promise<void>) | null} deps.saveAnalysis - null disables saving
@@ -19,6 +20,7 @@ const fail = (error) => ({ success: false, data: null, error });
 export function createApp({
   corsOrigins,
   rateLimitPerMinute,
+  trustProxy = 0,
   fetchTweet,
   analyzeText,
   saveAnalysis,
@@ -27,6 +29,7 @@ export function createApp({
   const app = express();
 
   app.disable("x-powered-by");
+  app.set("trust proxy", trustProxy);
   app.use(cors({ origin: corsOrigins }));
   app.use(express.json({ limit: "16kb" }));
 

@@ -45,6 +45,7 @@ npm run dev            # http://localhost:3001
 | `AIRTABLE_TOKEN`, `AIRTABLE_BASE_ID`, `AIRTABLE_TABLE_NAME` | | Set all three to save analyses to Airtable |
 | `RATE_LIMIT_PER_MINUTE` | | Analyses per client IP per minute, defaults to `10` (each is a paid Claude call) |
 | `PORT` | | Defaults to `3001` (5000 is taken by AirPlay on macOS) |
+| `TRUST_PROXY` | | Reverse proxies in front of the app, for correct client IPs (set to `1` automatically on Vercel) |
 | `CORS_ORIGIN` | | Comma-separated allowed origins, defaults to `http://localhost:5173` |
 
 The Airtable table needs these fields: `username`, `tweet`, `sentiment`, `summary`, `datetime`.
@@ -59,6 +60,20 @@ npm run dev            # http://localhost:5173
 
 In development, Vite proxies `/api/*` to the backend. For a production build served from a
 different origin than the API, set `VITE_API_URL` (see `frontend/.env.example`).
+
+## 🚀 Deploy (Vercel)
+
+The repo deploys as one Vercel project: the frontend is served statically and `api/index.js`
+runs the Express backend as a Vercel Function for every `/api/*` route (see `vercel.json`).
+
+```bash
+npx vercel link
+npx vercel env add ANTHROPIC_API_KEY production   # required
+npx vercel --prod
+```
+
+Airtable variables are optional, as locally. Without `ANTHROPIC_API_KEY` the site loads but
+`/api/*` returns `503 The analyzer is not configured yet`.
 
 ## 🔌 API
 

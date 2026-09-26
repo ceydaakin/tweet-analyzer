@@ -1,6 +1,7 @@
 {
   "name": "tweet-analyzer",
   "private": true,
+  "type": "module",
   "description": "Runs checks for both apps from the repo root. The apps keep their own dependencies.",
   "engines": {
     "node": ">=22.12.0"

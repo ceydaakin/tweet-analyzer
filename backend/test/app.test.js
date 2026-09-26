@@ -187,6 +187,16 @@ describe("POST /api/analyze", () => {
     assert.equal(res.body.success, false);
   });
 
+  it("rate limits by the forwarded client IP when behind a trusted proxy", async () => {
+    ({ app } = buildApp({ rateLimitPerMinute: 1, trustProxy: 1 }));
+    const from = (ip) =>
+      request(app).post("/api/analyze").set("X-Forwarded-For", ip).send({ url: TWEET_URL });
+
+    assert.equal((await from("1.1.1.1")).status, 200);
+    assert.equal((await from("2.2.2.2")).status, 200);
+    assert.equal((await from("1.1.1.1")).status, 429);
+  });
+
   it("only allows configured CORS origins", async () => {
     const allowed = await request(app)
       .post("/api/analyze")
@@ -234,6 +244,7 @@ describe("loadConfig", () => {
     assert.equal(config.port, 3001);
     assert.equal(config.model, "claude-opus-5");
     assert.equal(config.rateLimitPerMinute, 10);
+    assert.equal(config.trustProxy, 0);
     assert.deepEqual(config.corsOrigins, ["http://localhost:5173"]);
     assert.equal(config.airtable, null);
   });
@@ -245,12 +256,14 @@ describe("loadConfig", () => {
       PORT: "8080",
       ANTHROPIC_MODEL: "claude-sonnet-5",
       RATE_LIMIT_PER_MINUTE: "30",
+      TRUST_PROXY: "1",
       CORS_ORIGIN: "https://a.dev, https://b.dev",
     });
 
     assert.equal(config.port, 8080);
     assert.equal(config.model, "claude-sonnet-5");
     assert.equal(config.rateLimitPerMinute, 30);
+    assert.equal(config.trustProxy, 1);
     assert.deepEqual(config.corsOrigins, ["https://a.dev", "https://b.dev"]);
     assert.deepEqual(config.airtable, { token: "tok", baseId: "app123", tableName: "Table 1" });
   });

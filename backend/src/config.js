@@ -4,6 +4,7 @@ const DEFAULTS = Object.freeze({
   model: "claude-opus-5",
   rateLimitPerMinute: 10,
   corsOrigin: "http://localhost:5173",
+  trustProxy: 0,
 });
 
 function parseInteger(name, value, fallback, min, max) {
@@ -55,6 +56,9 @@ export function loadConfig(env = process.env) {
       10_000,
     ),
     corsOrigins: parseOrigins(env.CORS_ORIGIN),
+    // Number of reverse proxies in front of the app (1 on Vercel), so rate limiting
+    // sees the real client IP instead of the proxy's.
+    trustProxy: parseInteger("TRUST_PROXY", env.TRUST_PROXY, DEFAULTS.trustProxy, 0, 10),
     airtable: parseAirtable(env),
   });
 }

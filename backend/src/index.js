@@ -1,9 +1,5 @@
-import Anthropic from "@anthropic-ai/sdk";
-import { createApp } from "./app.js";
-import { createAirtableStore } from "./airtable.js";
-import { createClaudeAnalyzer } from "./analyzer.js";
 import { loadConfig } from "./config.js";
-import { createTweetFetcher } from "./tweets.js";
+import { createProductionApp } from "./server.js";
 
 let config;
 try {
@@ -13,18 +9,7 @@ try {
   process.exit(1);
 }
 
-const app = createApp({
-  corsOrigins: config.corsOrigins,
-  rateLimitPerMinute: config.rateLimitPerMinute,
-  fetchTweet: createTweetFetcher(),
-  analyzeText: createClaudeAnalyzer({
-    client: new Anthropic({ timeout: 60_000 }),
-    model: config.model,
-  }),
-  saveAnalysis: config.airtable ? createAirtableStore(config.airtable) : null,
-});
-
-app.listen(config.port, (error) => {
+createProductionApp(config).listen(config.port, (error) => {
   if (error) {
     console.error(`Could not start server on port ${config.port}:`, error.message);
     process.exit(1);
