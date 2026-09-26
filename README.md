@@ -94,10 +94,15 @@ Errors: `400` invalid input · `404` tweet not found · `422` Claude declined / 
 
 ## 🧪 Scripts
 
-| Where | Command | What it does |
-|-------|---------|--------------|
-| backend | `npm test` | API, Claude analyzer, tweet fetcher, config and Airtable tests |
-| frontend | `npm test` | Component and unit tests |
-| frontend | `npm run coverage` | Tests with coverage report |
-| frontend | `npm run lint` | ESLint |
-| frontend | `npm run build` | Production build to `dist/` |
+From the repo root:
+
+| Command | What it does |
+|---------|--------------|
+| `npm run setup` | Install backend and frontend dependencies |
+| `npm test` | Run backend and frontend tests |
+| `npm run lint` | ESLint (frontend) |
+| `npm run build` | Production build of the frontend to `frontend/dist/` |
+| `npm run check` | Tests + lint + build, all in one |
+
+Inside `backend/` or `frontend/` you can still run `npm test`, `npm run dev`, etc.
+`npm run coverage` in `frontend/` prints a coverage report.
