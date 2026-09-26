@@ -1,0 +1,74 @@
+/* Design tokens. Dark is the default; light overrides via [data-theme="light"]. */
+:root {
+  color-scheme: dark;
+
+  --bg: #08080b;
+  --bg-elevated: #0f0f14;
+  --surface: rgba(255, 255, 255, 0.035);
+  --surface-hover: rgba(255, 255, 255, 0.06);
+  --border: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.16);
+
+  --text: #f4f4f5;
+  --text-muted: #a1a1aa;
+  --text-subtle: #71717a;
+
+  --accent: #8b7bff;
+  --accent-2: #38bdf8;
+  --accent-contrast: #ffffff;
+  --accent-soft: rgba(139, 123, 255, 0.14);
+  --gradient: linear-gradient(120deg, #a78bfa 0%, #818cf8 40%, #38bdf8 100%);
+  --glow: rgba(124, 92, 255, 0.35);
+
+  --positive: #34d399;
+  --positive-soft: rgba(52, 211, 153, 0.12);
+  --neutral: #fbbf24;
+  --neutral-soft: rgba(251, 191, 36, 0.12);
+  --negative: #f87171;
+  --negative-soft: rgba(248, 113, 113, 0.12);
+
+  --shadow-card: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 20px 60px -20px rgba(0, 0, 0, 0.6);
+  --nav-bg: rgba(8, 8, 11, 0.7);
+
+  --font-sans: "Geist", "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-xl: 24px;
+  --radius-full: 999px;
+
+  --container: 1120px;
+  --nav-height: 64px;
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+
+  --bg: #fbfbfd;
+  --bg-elevated: #ffffff;
+  --surface: rgba(9, 9, 11, 0.025);
+  --surface-hover: rgba(9, 9, 11, 0.05);
+  --border: rgba(9, 9, 11, 0.08);
+  --border-strong: rgba(9, 9, 11, 0.16);
+
+  --text: #09090b;
+  --text-muted: #52525b;
+  --text-subtle: #71717a;
+
+  --accent: #6d5dfc;
+  --accent-soft: rgba(109, 93, 252, 0.1);
+  --gradient: linear-gradient(120deg, #7c3aed 0%, #6366f1 45%, #0ea5e9 100%);
+  --glow: rgba(109, 93, 252, 0.22);
+
+  --positive: #059669;
+  --positive-soft: rgba(5, 150, 105, 0.1);
+  --neutral: #b45309;
+  --neutral-soft: rgba(217, 119, 6, 0.1);
+  --negative: #dc2626;
+  --negative-soft: rgba(220, 38, 38, 0.08);
+
+  --shadow-card: 0 1px 2px rgba(9, 9, 11, 0.04), 0 24px 60px -24px rgba(40, 30, 120, 0.18);
+  --nav-bg: rgba(251, 251, 253, 0.75);
+}

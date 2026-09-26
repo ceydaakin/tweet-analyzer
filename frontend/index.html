@@ -2,13 +2,29 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" href="/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#000000" />
-    <meta name="description" content="Analyze the sentiment and summary of a tweet." />
+    <title>TweetAnalyzer: understand any tweet with Claude</title>
+    <meta name="description" content="Paste a link to an X post and get its sentiment and a plain-language summary, powered by Claude." />
+    <meta name="theme-color" content="#08080b" />
+    <link rel="icon" href="/favicon.ico" />
     <link rel="apple-touch-icon" href="/logo192.png" />
     <link rel="manifest" href="/manifest.json" />
-    <title>TweetAnalyzer</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Geist:wght@400..700&family=Geist+Mono:wght@400..600&display=swap"
+    />
+    <script>
+      // Apply the saved or system theme before first paint to avoid a flash.
+      try {
+        const saved = JSON.parse(localStorage.getItem("tweet-analyzer:theme"));
+        const light = matchMedia("(prefers-color-scheme: light)").matches;
+        document.documentElement.dataset.theme = saved || (light ? "light" : "dark");
+      } catch {
+        document.documentElement.dataset.theme = "dark";
+      }
+    </script>
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>

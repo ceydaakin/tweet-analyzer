@@ -1,4 +1,4 @@
-import { act, render, screen, within } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import App from "./App";
 import { analyzeTweet } from "./lib/api";
@@ -6,130 +6,70 @@ import { sampleResult } from "./test/fixtures";
 
 vi.mock("./lib/api", () => ({ analyzeTweet: vi.fn() }));
 
+const historySection = () => screen.getByRole("region", { name: "Recent Analyses" });
+
 describe("App", () => {
-  beforeAll(() => {
-    Element.prototype.scrollIntoView = vi.fn();
+  beforeEach(() => {
+    localStorage.clear();
+    delete document.documentElement.dataset.theme;
   });
 
-  it("renders the hero and an empty history", () => {
+  it("renders the hero, sections and an empty history", () => {
     render(<App />);
 
-    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(/understand your tweets/i);
-    expect(screen.getByText(/no analyses yet/i)).toBeInTheDocument();
-  });
-
-  it("adds a completed analysis to history and stats", async () => {
-    vi.mocked(analyzeTweet).mockResolvedValue(sampleResult);
-    render(<App />);
-
-    await userEvent.type(screen.getByLabelText("Tweet URL"), "https://x.com/a/status/1");
-    await userEvent.click(screen.getByRole("button", { name: /analyze tweet/i }));
-
-    await screen.findByText(/analysis complete/i);
-    expect(screen.queryByText(/no analyses yet/i)).not.toBeInTheDocument();
-    const stats = screen.getByText("Your Stats").closest(".card");
-    expect(within(stats).getByText("Analyzed").previousSibling).toHaveTextContent("1");
-    expect(within(stats).getByText("Positive").previousSibling).toHaveTextContent("1");
-    const history = screen.getByText("Recent Analyses").closest(".card");
-    expect(within(history).getByText("J")).toBeInTheDocument();
-    expect(within(history).getByText("Just now")).toBeInTheDocument();
-  });
-
-  it("opens and closes the signup modal", async () => {
-    render(<App />);
-
-    await userEvent.click(screen.getByRole("button", { name: "Get Started" }));
-    expect(screen.getByText("Create Your Account")).toBeInTheDocument();
-
-    await userEvent.keyboard("{Escape}");
-    expect(screen.queryByText("Create Your Account")).not.toBeInTheDocument();
-  });
-
-  describe("signup modal", () => {
-    afterEach(() => {
-      vi.useRealTimers();
-    });
-
-    it("confirms signup and closes itself", async () => {
-      vi.useFakeTimers({ shouldAdvanceTime: true });
-      const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
-      render(<App />);
-
-      await user.click(screen.getByRole("button", { name: "Get Your API Key" }));
-      await user.type(screen.getByPlaceholderText("you@example.com"), "me@example.com");
-      await user.click(screen.getByRole("button", { name: "Create Free Account" }));
-
-      expect(screen.getByText(/thanks for signing up/i)).toBeInTheDocument();
-      await act(() => vi.advanceTimersByTimeAsync(2000));
-      expect(screen.queryByText("Create Your Account")).not.toBeInTheDocument();
-    });
-
-    it("closes when clicking the backdrop or the close button", async () => {
-      render(<App />);
-
-      await userEvent.click(screen.getByRole("button", { name: "Get Started" }));
-      await userEvent.click(screen.getByText("Create Your Account").closest(".modal-overlay"));
-      expect(screen.queryByText("Create Your Account")).not.toBeInTheDocument();
-
-      await userEvent.click(screen.getByRole("button", { name: "Get Started" }));
-      await userEvent.click(screen.getByRole("button", { name: "✕" }));
-      expect(screen.queryByText("Create Your Account")).not.toBeInTheDocument();
-    });
-  });
-
-  describe("contact modal", () => {
-    it("sends a message and closes itself", async () => {
-      vi.useFakeTimers({ shouldAdvanceTime: true });
-      const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
-      render(<App />);
-
-      await user.click(screen.getByRole("button", { name: /get support/i }));
-      await user.type(screen.getByPlaceholderText("Your name"), "Ada");
-      await user.type(screen.getByPlaceholderText("you@example.com"), "ada@example.com");
-      await user.type(screen.getByPlaceholderText("How can we help?"), "Hello");
-      await user.click(screen.getByRole("button", { name: "Send Message" }));
-
-      expect(screen.getByText(/message sent/i)).toBeInTheDocument();
-      await act(() => vi.advanceTimersByTimeAsync(2000));
-      expect(screen.queryByText("Contact Us")).not.toBeInTheDocument();
-      vi.useRealTimers();
-    });
-
-    it("opens from the footer and closes via backdrop and close button", async () => {
-      render(<App />);
-
-      await userEvent.click(screen.getByRole("link", { name: "Contact" }));
-      await userEvent.click(screen.getByText("Contact Us").closest(".modal-overlay"));
-      expect(screen.queryByText("Contact Us")).not.toBeInTheDocument();
-
-      await userEvent.click(screen.getByRole("link", { name: "Contact" }));
-      await userEvent.click(screen.getByRole("button", { name: "✕" }));
-      expect(screen.queryByText("Contact Us")).not.toBeInTheDocument();
-    });
-  });
-
-  it("scrolls to sections from nav, quick actions and footer links", async () => {
-    render(<App />);
-
-    const targets = [
-      ...screen.getAllByRole("link", { name: /features|docs|tweetanalyzer/i }),
-      screen.getByRole("button", { name: /explore features/i }),
-      screen.getByRole("button", { name: /view api docs/i }),
-    ];
-    for (const target of targets) {
-      await userEvent.click(target);
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(/understand any tweet/i);
+    for (const name of [/three steps/i, /everything you need/i, /one endpoint/i]) {
+      expect(screen.getByRole("heading", { level: 2, name })).toBeInTheDocument();
     }
-
-    expect(Element.prototype.scrollIntoView).toHaveBeenCalledTimes(targets.length);
+    expect(within(historySection()).getByText(/no analyses yet/i)).toBeInTheDocument();
   });
 
-  it("copies the example request to the clipboard", async () => {
+  it("adds a completed analysis to history and stats, and persists it", async () => {
+    vi.mocked(analyzeTweet).mockResolvedValue(sampleResult);
+    const { unmount } = render(<App />);
+
+    await userEvent.type(screen.getByLabelText("Tweet URL"), sampleResult.url);
+    await userEvent.click(screen.getByRole("button", { name: /analyze tweet/i }));
+    await screen.findByRole("heading", { name: "Analysis Results" });
+
+    const history = historySection();
+    expect(within(history).getByText("1", { selector: ".stats-number" })).toBeInTheDocument();
+    expect(within(history).getByText("Just now")).toBeInTheDocument();
+
+    unmount();
+    render(<App />);
+    expect(within(historySection()).getByText(sampleResult.summary)).toBeInTheDocument();
+  });
+
+  it("clears the history", async () => {
+    localStorage.setItem("tweet-analyzer:history", JSON.stringify([sampleResult]));
+    render(<App />);
+
+    await userEvent.click(within(historySection()).getByRole("button", { name: /clear/i }));
+
+    expect(within(historySection()).getByText(/no analyses yet/i)).toBeInTheDocument();
+    expect(JSON.parse(localStorage.getItem("tweet-analyzer:history"))).toEqual([]);
+  });
+
+  it("toggles and remembers the theme", async () => {
+    render(<App />);
+    expect(document.documentElement.dataset.theme).toBe("dark");
+
+    await userEvent.click(screen.getByRole("button", { name: /switch to light theme/i }));
+
+    expect(document.documentElement.dataset.theme).toBe("light");
+    expect(JSON.parse(localStorage.getItem("tweet-analyzer:theme"))).toBe("light");
+    expect(screen.getByRole("button", { name: /switch to dark theme/i })).toBeInTheDocument();
+  });
+
+  it("copies the example API request", async () => {
     const user = userEvent.setup();
     const writeText = vi.spyOn(navigator.clipboard, "writeText").mockResolvedValue();
     render(<App />);
 
-    await user.click(screen.getByRole("button", { name: "Copy" }));
+    await user.click(screen.getByRole("button", { name: /copy request/i }));
 
     expect(writeText).toHaveBeenCalledWith(expect.stringContaining("curl -X POST"));
+    expect(await screen.findByText("Copied")).toBeInTheDocument();
   });
 });
