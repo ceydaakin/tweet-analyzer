@@ -1,9 +1,10 @@
 import { act, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import App from "./App";
-import { saveAnalysis } from "./lib/api";
+import { analyzeTweet } from "./lib/api";
+import { sampleResult } from "./test/fixtures";
 
-vi.mock("./lib/api", () => ({ saveAnalysis: vi.fn() }));
+vi.mock("./lib/api", () => ({ analyzeTweet: vi.fn() }));
 
 describe("App", () => {
   beforeAll(() => {
@@ -18,7 +19,7 @@ describe("App", () => {
   });
 
   it("adds a completed analysis to history and stats", async () => {
-    vi.mocked(saveAnalysis).mockResolvedValue({});
+    vi.mocked(analyzeTweet).mockResolvedValue(sampleResult);
     render(<App />);
 
     await userEvent.type(screen.getByLabelText("Tweet URL"), "https://x.com/a/status/1");
@@ -29,6 +30,9 @@ describe("App", () => {
     const stats = screen.getByText("Your Stats").closest(".card");
     expect(within(stats).getByText("Analyzed").previousSibling).toHaveTextContent("1");
     expect(within(stats).getByText("Positive").previousSibling).toHaveTextContent("1");
+    const history = screen.getByText("Recent Analyses").closest(".card");
+    expect(within(history).getByText("J")).toBeInTheDocument();
+    expect(within(history).getByText("Just now")).toBeInTheDocument();
   });
 
   it("opens and closes the signup modal", async () => {

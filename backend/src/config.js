@@ -1,39 +1,60 @@
-const REQUIRED_VARS = ["AIRTABLE_TOKEN", "AIRTABLE_BASE_ID", "AIRTABLE_TABLE_NAME"];
-const DEFAULT_PORT = 3001;
-const DEFAULT_CORS_ORIGIN = "http://localhost:5173";
+const AIRTABLE_VARS = ["AIRTABLE_TOKEN", "AIRTABLE_BASE_ID", "AIRTABLE_TABLE_NAME"];
+const DEFAULTS = Object.freeze({
+  port: 3001,
+  model: "claude-opus-5",
+  rateLimitPerMinute: 10,
+  corsOrigin: "http://localhost:5173",
+});
 
-function parsePort(value) {
-  if (value === undefined || value === "") return DEFAULT_PORT;
-  const port = Number(value);
-  if (!Number.isInteger(port) || port < 1 || port > 65535) {
-    throw new Error(`Invalid PORT "${value}": must be an integer 1-65535`);
+function parseInteger(name, value, fallback, min, max) {
+  if (value === undefined || value === "") return fallback;
+  const number = Number(value);
+  if (!Number.isInteger(number) || number < min || number > max) {
+    throw new Error(`Invalid ${name} "${value}": must be an integer ${min}-${max}`);
   }
-  return port;
+  return number;
 }
 
 function parseOrigins(value) {
-  return (value || DEFAULT_CORS_ORIGIN)
+  return (value || DEFAULTS.corsOrigin)
     .split(",")
     .map((origin) => origin.trim())
     .filter(Boolean);
 }
 
+// Airtable is optional, but a half-configured Airtable is almost certainly a mistake.
+function parseAirtable(env) {
+  const present = AIRTABLE_VARS.filter((name) => env[name]?.trim());
+  if (present.length === 0) return null;
+  if (present.length < AIRTABLE_VARS.length) {
+    const missing = AIRTABLE_VARS.filter((name) => !present.includes(name));
+    throw new Error(`Airtable is partly configured. Also set: ${missing.join(", ")}`);
+  }
+  return Object.freeze({
+    token: env.AIRTABLE_TOKEN.trim(),
+    baseId: env.AIRTABLE_BASE_ID.trim(),
+    tableName: env.AIRTABLE_TABLE_NAME.trim(),
+  });
+}
+
 export function loadConfig(env = process.env) {
-  const missing = REQUIRED_VARS.filter((name) => !env[name]?.trim());
-  if (missing.length > 0) {
+  if (!env.ANTHROPIC_API_KEY?.trim()) {
     throw new Error(
-      `Missing required environment variables: ${missing.join(", ")}. ` +
-        "Copy backend/.env.example to backend/.env and fill them in.",
+      "Missing ANTHROPIC_API_KEY. Copy backend/.env.example to backend/.env and fill it in.",
     );
   }
 
   return Object.freeze({
-    port: parsePort(env.PORT),
+    port: parseInteger("PORT", env.PORT, DEFAULTS.port, 1, 65535),
+    model: env.ANTHROPIC_MODEL?.trim() || DEFAULTS.model,
+    rateLimitPerMinute: parseInteger(
+      "RATE_LIMIT_PER_MINUTE",
+      env.RATE_LIMIT_PER_MINUTE,
+      DEFAULTS.rateLimitPerMinute,
+      1,
+      10_000,
+    ),
     corsOrigins: parseOrigins(env.CORS_ORIGIN),
-    airtable: Object.freeze({
-      token: env.AIRTABLE_TOKEN.trim(),
-      baseId: env.AIRTABLE_BASE_ID.trim(),
-      tableName: env.AIRTABLE_TABLE_NAME.trim(),
-    }),
+    airtable: parseAirtable(env),
   });
 }

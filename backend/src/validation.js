@@ -1,48 +1,42 @@
-export const SENTIMENTS = ["Positive", "Neutral", "Negative"];
+import { parseTweetUrl } from "./tweets.js";
 
-const MAX_LENGTH = {
-  username: 100,
-  content: 1000,
-  summary: 500,
-};
+export const MAX_URL_LENGTH = 500;
+export const MAX_TEXT_LENGTH = 5000;
 
-function checkString(body, field) {
+function optionalString(body, field, maxLength, errors) {
   const value = body[field];
-  if (typeof value !== "string" || value.trim() === "") {
-    return `"${field}" is required and must be a non-empty string`;
+  if (value === undefined || value === null) return "";
+  if (typeof value !== "string") {
+    errors.push(`"${field}" must be a string`);
+    return "";
   }
-  if (value.length > MAX_LENGTH[field]) {
-    return `"${field}" must be at most ${MAX_LENGTH[field]} characters`;
+  const trimmed = value.trim();
+  if (trimmed.length > maxLength) {
+    errors.push(`"${field}" must be at most ${maxLength} characters`);
   }
-  return null;
+  return trimmed;
 }
 
-export function validateAnalysis(body) {
+/**
+ * Validates a POST /api/analyze body: a tweet URL, pasted text, or both.
+ * @returns {{ value: { url: string | null, text: string | null } | null, errors: string[] }}
+ */
+export function validateAnalyzeRequest(body) {
   if (body === null || typeof body !== "object" || Array.isArray(body)) {
     return { value: null, errors: ["Request body must be a JSON object"] };
   }
 
-  const errors = ["username", "content", "summary"]
-    .map((field) => checkString(body, field))
-    .filter(Boolean);
+  const errors = [];
+  const url = optionalString(body, "url", MAX_URL_LENGTH, errors);
+  const text = optionalString(body, "text", MAX_TEXT_LENGTH, errors);
 
-  if (!SENTIMENTS.includes(body.sentiment)) {
-    errors.push(`"sentiment" must be one of: ${SENTIMENTS.join(", ")}`);
+  if (errors.length === 0 && !url && !text) {
+    errors.push('Provide a tweet "url", the tweet "text", or both');
   }
-  if (typeof body.datetime !== "string" || Number.isNaN(Date.parse(body.datetime))) {
-    errors.push('"datetime" must be an ISO 8601 date string');
+  if (url && !parseTweetUrl(url)) {
+    errors.push('"url" must be a tweet URL like https://x.com/user/status/123');
   }
 
   if (errors.length > 0) return { value: null, errors };
-
-  return {
-    value: {
-      username: body.username.trim(),
-      content: body.content.trim(),
-      sentiment: body.sentiment,
-      summary: body.summary.trim(),
-      datetime: new Date(body.datetime).toISOString(),
-    },
-    errors: [],
-  };
+  return { value: { url: url || null, text: text || null }, errors: [] };
 }

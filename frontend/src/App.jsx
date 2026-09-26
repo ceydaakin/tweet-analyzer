@@ -182,7 +182,7 @@ function App() {
                   {analysisHistory.map((item, index) => (
                     <div key={index} className="history-item">
                       <div className="history-avatar">
-                        {item.username.charAt(1).toUpperCase()}
+                        {item.username.replace(/^@/, "").charAt(0).toUpperCase()}
                       </div>
                       <div className="history-content">
                         <div className="history-username">{item.username}</div>

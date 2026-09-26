@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { analyzeTweet, SAMPLE_TWEET_CONTENT } from "../lib/analyze";
-import { saveAnalysis } from "../lib/api";
+import { analyzeTweet } from "../lib/api";
 
 function TweetForm({ onAnalysisComplete }) {
   const [tweetUrl, setTweetUrl] = useState("");
+  const [tweetText, setTweetText] = useState("");
   const [status, setStatus] = useState({ type: "", message: "" });
   const [isLoading, setIsLoading] = useState(false);
   const [analysisResult, setAnalysisResult] = useState(null);
@@ -11,26 +11,25 @@ function TweetForm({ onAnalysisComplete }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!tweetUrl.trim()) {
-      setStatus({ type: "error", message: "Please enter a tweet URL" });
+    const url = tweetUrl.trim();
+    const text = tweetText.trim();
+    if (!url && !text) {
+      setStatus({ type: "error", message: "Enter a tweet URL or paste the tweet text" });
       return;
     }
 
     setIsLoading(true);
-    setStatus({ type: "loading", message: "Analyzing tweet..." });
+    setStatus({ type: "loading", message: "Claude is reading the tweet..." });
     setAnalysisResult(null);
 
-    const content = SAMPLE_TWEET_CONTENT;
-    const analysis = analyzeTweet(content);
-
     try {
-      await saveAnalysis({ ...analysis, content });
-
-      const result = { ...analysis, content };
+      const result = await analyzeTweet({ url: url || undefined, text: text || undefined });
       setAnalysisResult(result);
       setStatus({
         type: "success",
-        message: "Analysis complete! Results saved to database.",
+        message: result.saved
+          ? "Analysis complete! Saved to Airtable."
+          : "Analysis complete!",
       });
 
       if (onAnalysisComplete) {
@@ -38,12 +37,9 @@ function TweetForm({ onAnalysisComplete }) {
       }
 
       setTweetUrl("");
+      setTweetText("");
     } catch (error) {
-      console.error("Failed to save analysis:", error);
-      setStatus({
-        type: "error",
-        message: "Failed to save analysis. Please try again.",
-      });
+      setStatus({ type: "error", message: error.message });
     } finally {
       setIsLoading(false);
     }
@@ -85,13 +81,29 @@ function TweetForm({ onAnalysisComplete }) {
               type="text"
               value={tweetUrl}
               onChange={(e) => setTweetUrl(e.target.value)}
-              placeholder="https://twitter.com/user/status/123456789"
+              placeholder="https://x.com/user/status/123456789"
               disabled={isLoading}
             />
           </div>
           <p className="form-hint">
-            Paste any Twitter/X post URL to analyze its sentiment and content
+            Paste any public X/Twitter post URL and Claude will analyze it
           </p>
+        </div>
+
+        <div className="form-group">
+          <label className="form-label" htmlFor="tweetText">
+            Tweet text (optional)
+          </label>
+          <textarea
+            id="tweetText"
+            className="form-input form-textarea"
+            rows={3}
+            maxLength={5000}
+            value={tweetText}
+            onChange={(e) => setTweetText(e.target.value)}
+            placeholder="Or paste the tweet text here, e.g. if the URL can't be fetched"
+            disabled={isLoading}
+          />
         </div>
 
         <button className="btn btn-primary" type="submit" disabled={isLoading}>
@@ -142,6 +154,10 @@ function TweetForm({ onAnalysisComplete }) {
                 {analysisResult.sentiment === "Neutral" && "→ "}
                 {analysisResult.sentiment}
               </span>
+            </div>
+            <div className="result-card full-width">
+              <div className="result-label">Tweet</div>
+              <div className="result-value">{analysisResult.content}</div>
             </div>
             <div className="result-card full-width">
               <div className="result-label">Summary</div>
