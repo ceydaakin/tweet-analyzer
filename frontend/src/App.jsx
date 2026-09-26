@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import TweetForm from "./components/TweetForm";
 import "./App.css";
 

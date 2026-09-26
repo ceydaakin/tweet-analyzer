@@ -1,23 +1,12 @@
-import React, { useState } from "react";
-import axios from "axios";
+import { useState } from "react";
+import { analyzeTweet, SAMPLE_TWEET_CONTENT } from "../lib/analyze";
+import { saveAnalysis } from "../lib/api";
 
 function TweetForm({ onAnalysisComplete }) {
   const [tweetUrl, setTweetUrl] = useState("");
   const [status, setStatus] = useState({ type: "", message: "" });
   const [isLoading, setIsLoading] = useState(false);
   const [analysisResult, setAnalysisResult] = useState(null);
-
-  const fakeTweetContent =
-    "This is a great example tweet for testing our AI tool.";
-
-  const analyzeTweet = (content) => {
-    return {
-      summary: content.slice(0, 50) + "...",
-      sentiment: content.includes("great") ? "Positive" : "Neutral",
-      datetime: new Date().toISOString(),
-      username: "@dummy_user",
-    };
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -31,17 +20,11 @@ function TweetForm({ onAnalysisComplete }) {
     setStatus({ type: "loading", message: "Analyzing tweet..." });
     setAnalysisResult(null);
 
-    const content = fakeTweetContent;
+    const content = SAMPLE_TWEET_CONTENT;
     const analysis = analyzeTweet(content);
 
     try {
-      await axios.post("http://localhost:5000/api/analyze", {
-        username: analysis.username,
-        content,
-        sentiment: analysis.sentiment,
-        summary: analysis.summary,
-        datetime: analysis.datetime,
-      });
+      await saveAnalysis({ ...analysis, content });
 
       const result = { ...analysis, content };
       setAnalysisResult(result);
@@ -56,6 +39,7 @@ function TweetForm({ onAnalysisComplete }) {
 
       setTweetUrl("");
     } catch (error) {
+      console.error("Failed to save analysis:", error);
       setStatus({
         type: "error",
         message: "Failed to save analysis. Please try again.",
