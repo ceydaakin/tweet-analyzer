@@ -63,8 +63,9 @@ different origin than the API, set `VITE_API_URL` (see `frontend/.env.example`).
 
 ## 🚀 Deploy (Vercel)
 
-The repo deploys as one Vercel project: the frontend is served statically and `api/index.js`
-runs the Express backend as a Vercel Function for every `/api/*` route (see `vercel.json`).
+The repo deploys as one Vercel project with two services (see `vercel.json`): `frontend/` is
+built with Vite and served statically, and `backend/` runs as an Express function
+(entrypoint `backend/src/vercel.js`) that handles every `/api/*` route.
 
 ```bash
 npx vercel link
